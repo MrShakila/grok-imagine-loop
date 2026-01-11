@@ -53,21 +53,39 @@ if (window.GrokLoopInjected) {
     async function typeHumanly(element, text) {
         element.focus();
 
-        // Sometimes clear explicitly first if it's value-based
+        // React/Framework handling: Use native value setter
+        const setNativeValue = (el, value) => {
+            const descriptor = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value") ||
+                Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value");
+            if (descriptor && descriptor.set) {
+                descriptor.set.call(el, value);
+            } else {
+                el.value = value;
+            }
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+
+        // Clear first (humanly: select all and delete?)
+        // For now, fast clear:
         if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-            element.value = '';
+            setNativeValue(element, '');
+        } else if (element.isContentEditable) {
+            document.execCommand('selectAll', false, null);
+            document.execCommand('delete', false, null);
         }
+
+        let currentText = '';
 
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
 
-            // Random keystroke delay (30ms - 150ms)
-            const delay = Math.floor(Math.random() * 120) + 30;
+            // Random keystroke delay (20ms - 80ms) - slightly faster
+            const delay = Math.floor(Math.random() * 60) + 20;
             await new Promise(r => setTimeout(r, delay));
 
-            // Occasional "thinking" pause (1% chance)
-            if (Math.random() < 0.01) {
-                await new Promise(r => setTimeout(r, Math.random() * 1000 + 500));
+            // Occasional "thinking" pause (0.5% chance)
+            if (Math.random() < 0.005) {
+                await new Promise(r => setTimeout(r, Math.random() * 500 + 200));
             }
 
             // Dispatch events
@@ -79,14 +97,16 @@ if (window.GrokLoopInjected) {
             if (element.tagName === 'DIV' && element.isContentEditable) {
                 document.execCommand('insertText', false, char);
             } else {
-                element.value += char;
+                currentText += char;
+                setNativeValue(element, currentText);
             }
 
-            element.dispatchEvent(new InputEvent('input', { bubbles: true, data: char, inputType: 'insertText' }));
+            // Input event is dispatched by setNativeValue
             element.dispatchEvent(new KeyboardEvent('keyup', keyEventOpts));
         }
 
         element.dispatchEvent(new Event('change', { bubbles: true }));
+        await new Promise(r => setTimeout(r, 200));
     }
 
     async function simulateClick(element) {
