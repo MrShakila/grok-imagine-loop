@@ -5,13 +5,92 @@ document.addEventListener('DOMContentLoaded', () => {
     const loopsInput = document.getElementById('loops');
     const timeoutInput = document.getElementById('timeout');
     const fileInput = document.getElementById('initialImage');
+    const restoredImageIndicator = document.getElementById('restoredImageIndicator');
+    const clearImageBtn = document.getElementById('clearImageBtn');
     const statusDiv = document.getElementById('status');
+    let storedImageData = null;
 
-    // Auto-populate loops based on lines
+    const autoDownloadInput = document.getElementById('autoDownload');
+    const upscaleInput = document.getElementById('upscale');
+    const resetInputsBtn = document.getElementById('resetInputsBtn');
+
+    // --- Persistence Logic ---
+
+    // Load saved inputs AND image
+    chrome.storage.local.get(['grokLoopInputs', 'grokLoopImage'], (result) => {
+        if (result.grokLoopInputs) {
+            const saved = result.grokLoopInputs;
+            if (saved.prompt) promptInput.value = saved.prompt;
+            if (saved.loops) loopsInput.value = saved.loops;
+            if (saved.timeout) timeoutInput.value = saved.timeout;
+            if (saved.upscale !== undefined) upscaleInput.checked = saved.upscale;
+            if (saved.autoDownload !== undefined) autoDownloadInput.checked = saved.autoDownload;
+        }
+        if (result.grokLoopImage) {
+            storedImageData = result.grokLoopImage;
+            restoredImageIndicator.style.display = 'flex';
+        }
+    });
+
+    // Image Input Handler
+    fileInput.addEventListener('change', async () => {
+        if (fileInput.files.length > 0) {
+            const dataUrl = await readFileAsDataURL(fileInput.files[0]);
+            storedImageData = dataUrl;
+            chrome.storage.local.set({ 'grokLoopImage': dataUrl });
+            restoredImageIndicator.style.display = 'flex';
+        }
+    });
+
+    // Clear Image Handler
+    clearImageBtn.addEventListener('click', () => {
+        storedImageData = null;
+        fileInput.value = ''; // Reset file input
+        chrome.storage.local.remove('grokLoopImage');
+        restoredImageIndicator.style.display = 'none';
+    });
+
+    // Save inputs handler
+    const saveInputs = () => {
+        const inputs = {
+            prompt: promptInput.value,
+            loops: loopsInput.value,
+            timeout: timeoutInput.value,
+            upscale: upscaleInput.checked,
+            autoDownload: autoDownloadInput.checked
+        };
+        chrome.storage.local.set({ 'grokLoopInputs': inputs });
+    };
+
+    // Attach listeners
+    [promptInput, loopsInput, timeoutInput, upscaleInput, autoDownloadInput].forEach(el => {
+        el.addEventListener('input', saveInputs);
+        el.addEventListener('change', saveInputs);
+    });
+
+    // Reset handler
+    resetInputsBtn.addEventListener('click', () => {
+        if (confirm('Reset all inputs and images to default?')) {
+            promptInput.value = '';
+            loopsInput.value = '3';
+            timeoutInput.value = '120';
+            upscaleInput.checked = false;
+            autoDownloadInput.checked = false;
+
+            // Clear image
+            storedImageData = null;
+            fileInput.value = '';
+            restoredImageIndicator.style.display = 'none';
+            chrome.storage.local.remove(['grokLoopInputs', 'grokLoopImage']);
+        }
+    });
+
+    // Auto-populate loops based on lines (and save)
     promptInput.addEventListener('input', () => {
         const lines = promptInput.value.split('\n').filter(p => p.trim() !== '').length;
         if (lines > 0) {
             loopsInput.value = lines;
+            saveInputs();
         }
     });
 
@@ -78,6 +157,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const popOutBtn = document.getElementById('popOutBtn');
+
+    // --- Tab Finding Helper ---
+    async function findGrokTab() {
+        // 1. Try active tab in current window (Standard Popup)
+        let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        const isGrok = (t) => t && (t.url.includes('grok.com') || t.url.includes('x.com') || t.url.includes('twitter.com'));
+
+        if (isGrok(tab)) return tab;
+
+        // 2. If we are detached, find the most relevant Grok tab
+        console.log("Current tab is not Grok. Searching all windows...");
+        const tabs = await chrome.tabs.query({ url: ["*://grok.com/*", "*://x.com/*", "*://twitter.com/*"] });
+
+        // Prefer active tabs in other windows
+        const activeGrok = tabs.find(t => t.active);
+        return activeGrok || tabs[0];
+    }
+
+    // --- Pop Out Logic ---
+    if (popOutBtn) {
+        popOutBtn.addEventListener('click', () => {
+            chrome.windows.create({
+                url: chrome.runtime.getURL("popup/popup.html"),
+                type: "popup",
+                width: 360,
+                height: 650
+            });
+            window.close(); // Close the standard popup
+        });
+    }
+
     // --- Resume Logic ---
 
     chrome.storage.local.get(['grokLoopState'], (result) => {
@@ -86,8 +198,11 @@ document.addEventListener('DOMContentLoaded', () => {
             resumeBtn.innerText = `Resume (Segment ${result.grokLoopState.currentSegmentIndex + 1})`;
 
             resumeBtn.onclick = async () => {
-                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-                if (!tab) return;
+                const tab = await findGrokTab();
+                if (!tab) {
+                    statusDiv.innerText = 'Error: No Grok tab found.';
+                    return;
+                }
 
                 await sendMessageWithRetry(tab.id, {
                     action: 'RESTORE_LOOP',
@@ -112,13 +227,15 @@ document.addEventListener('DOMContentLoaded', () => {
         let initialImageData = null;
         if (fileInput.files.length > 0) {
             initialImageData = await readFileAsDataURL(fileInput.files[0]);
+        } else if (storedImageData) {
+            initialImageData = storedImageData;
         }
 
         // Get active tab
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tab = await findGrokTab();
 
         if (!tab) {
-            statusDiv.innerText = 'Error: No active tab found.';
+            statusDiv.innerText = 'Error: No active Grok tab found.';
             return;
         }
 
@@ -137,6 +254,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const upscale = document.getElementById('upscale').checked;
+        const autoDownload = document.getElementById('autoDownload').checked;
+
         // Send 'START_LOOP'
         await sendMessageWithRetry(tab.id, {
             action: 'START_LOOP',
@@ -144,7 +264,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 prompts: promptSequence,
                 loops: loops,
                 initialImage: initialImageData,
-                timeout: timeout
+                timeout: timeout,
+                upscale: upscale,
+                autoDownload: autoDownload
             }
         });
     });

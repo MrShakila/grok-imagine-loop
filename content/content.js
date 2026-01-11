@@ -327,6 +327,42 @@ if (window.GrokLoopInjected) {
         });
     }
 
+    async function upscaleVideo() {
+        await new Promise(r => setTimeout(r, 2000)); // Wait for UI to settle
+
+        const findUpscaleBtn = () => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            return buttons.find(b => {
+                const text = (b.innerText || b.ariaLabel || '').toLowerCase();
+                return text.includes('upscale') && !b.disabled;
+            });
+        };
+
+        let upscaleBtn = findUpscaleBtn();
+
+        if (!upscaleBtn) {
+            console.log('Upscale button not found initially. Waiting...');
+            // Poll for a bit
+            for (let i = 0; i < 10; i++) {
+                await new Promise(r => setTimeout(r, 1000));
+                upscaleBtn = findUpscaleBtn();
+                if (upscaleBtn) break;
+            }
+        }
+
+        if (!upscaleBtn) {
+            throw new Error('Upscale button not found after waiting.');
+        }
+
+        console.log('Found Upscale button. Clicking...');
+        await simulateClick(upscaleBtn);
+
+        // Wait for the NEW video (High Res)
+        // We can reuse waitForVideoResponse, assuming the old one is replaced or a new one is added.
+        console.log('Waiting for upscaled video generation...');
+        return waitForVideoResponse();
+    }
+
     async function extractLastFrame(videoUrl) {
         console.log('Fetching video data via background script to bypass CORS...');
         const dataUrl = await new Promise((resolve, reject) => {
@@ -703,9 +739,35 @@ if (window.GrokLoopInjected) {
                     await sendPromptToGrok(seg.prompt);
 
                     // 3. Status
-                    const videoUrl = await waitForVideoResponse();
+                    let videoUrl = await waitForVideoResponse();
+
+                    // --- Upscaling (Optional) ---
+                    if (state.config.upscale) {
+                        try {
+                            console.log('Upscaling requested. Looking for Upscale button...');
+                            const upscaledUrl = await upscaleVideo();
+                            if (upscaledUrl) {
+                                console.log('Upscale successful. Replacing video URL.');
+                                videoUrl = upscaledUrl;
+                            }
+                        } catch (upscaleErr) {
+                            console.warn('Upscaling failed (skipping, using original):', upscaleErr);
+                        }
+                    }
+
                     seg.videoUrl = videoUrl;
                     seg.status = 'done';
+
+                    // --- Auto-Download (Optional) ---
+                    if (state.config.autoDownload && videoUrl) {
+                        try {
+                            console.log(`Auto-downloading Segment ${index + 1}...`);
+                            // Add a small delay to ensure internal state handles it
+                            window.LoopManager.downloadSegment(index);
+                        } catch (dlErr) {
+                            console.warn('Auto-download failed:', dlErr);
+                        }
+                    }
 
                     // Proactive Extraction
                     if (index + 1 < state.segments.length) {
