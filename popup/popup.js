@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let storedImageData = null;
 
     const autoDownloadInput = document.getElementById('autoDownload');
+    const autoSkipInput = document.getElementById('autoSkip');
     const upscaleInput = document.getElementById('upscale');
     const resetInputsBtn = document.getElementById('resetInputsBtn');
 
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (saved.timeout) timeoutInput.value = saved.timeout;
             if (saved.upscale !== undefined) upscaleInput.checked = saved.upscale;
             if (saved.autoDownload !== undefined) autoDownloadInput.checked = saved.autoDownload;
+            if (saved.autoSkip !== undefined) autoSkipInput.checked = saved.autoSkip;
         }
         if (result.grokLoopImage) {
             // Handle new object format vs old string format
@@ -81,15 +83,19 @@ document.addEventListener('DOMContentLoaded', () => {
             loops: loopsInput.value,
             timeout: timeoutInput.value,
             upscale: upscaleInput.checked,
-            autoDownload: autoDownloadInput.checked
+            autoDownload: autoDownloadInput.checked,
+            autoSkip: autoSkipInput.checked
         };
         chrome.storage.local.set({ 'grokLoopInputs': inputs });
     };
 
     // Attach listeners
-    [promptInput, loopsInput, timeoutInput, upscaleInput, autoDownloadInput].forEach(el => {
-        el.addEventListener('input', saveInputs);
-        el.addEventListener('change', saveInputs);
+    // Attach listeners
+    [promptInput, loopsInput, timeoutInput, upscaleInput, autoDownloadInput, autoSkipInput].forEach(el => {
+        if (el) {
+            el.addEventListener('input', saveInputs);
+            el.addEventListener('change', saveInputs);
+        }
     });
 
     // Reset handler
@@ -100,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             timeoutInput.value = '120';
             upscaleInput.checked = false;
             autoDownloadInput.checked = false;
+            autoSkipInput.checked = false;
 
             // Clear image
             storedImageData = null;
@@ -280,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const upscale = document.getElementById('upscale').checked;
         const autoDownload = document.getElementById('autoDownload').checked;
+        const autoSkip = document.getElementById('autoSkip').checked;
 
         // Send 'START_LOOP'
         await sendMessageWithRetry(tab.id, {
@@ -290,7 +298,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 initialImage: initialImageData,
                 timeout: timeout,
                 upscale: upscale,
-                autoDownload: autoDownload
+                autoDownload: autoDownload,
+                autoSkip: autoSkip
             }
         });
     });

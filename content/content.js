@@ -52,8 +52,19 @@ if (window.GrokLoopInjected) {
 
     async function typeHumanly(element, text) {
         element.focus();
+        await new Promise(r => setTimeout(r, 50));
 
-        // React/Framework handling: Use native value setter
+        // 1. Clear existing content
+        if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
+            element.value = '';
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+            element.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (element.isContentEditable) {
+            document.execCommand('selectAll', false, null);
+            document.execCommand('delete', false, null);
+        }
+
+        // 2. React Value Setter Helper
         const setNativeValue = (el, value) => {
             const descriptor = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value") ||
                 Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value");
@@ -65,44 +76,43 @@ if (window.GrokLoopInjected) {
             el.dispatchEvent(new Event('input', { bubbles: true }));
         };
 
-        // Clear first (humanly: select all and delete?)
-        // For now, fast clear:
-        if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-            setNativeValue(element, '');
-        } else if (element.isContentEditable) {
-            document.execCommand('selectAll', false, null);
-            document.execCommand('delete', false, null);
-        }
-
+        // 3. Type character by character
         let currentText = '';
-
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
-
-            // Random keystroke delay (20ms - 80ms) - slightly faster
-            const delay = Math.floor(Math.random() * 60) + 20;
+            const delay = Math.floor(Math.random() * 40) + 10; // Faster typing
             await new Promise(r => setTimeout(r, delay));
 
-            // Occasional "thinking" pause (0.5% chance)
-            if (Math.random() < 0.005) {
-                await new Promise(r => setTimeout(r, Math.random() * 500 + 200));
-            }
-
-            // Dispatch events
+            // Standard events
             const keyEventOpts = { bubbles: true, cancelable: true, key: char, char: char };
             element.dispatchEvent(new KeyboardEvent('keydown', keyEventOpts));
             element.dispatchEvent(new KeyboardEvent('keypress', keyEventOpts));
 
-            // Insert char
             if (element.tagName === 'DIV' && element.isContentEditable) {
                 document.execCommand('insertText', false, char);
             } else {
-                currentText += char;
-                setNativeValue(element, currentText);
+                // Try execCommand first for Textarea (more robust for some editors)
+                const success = document.execCommand('insertText', false, char);
+                if (!success) {
+                    currentText += char;
+                    setNativeValue(element, currentText);
+                }
             }
-
-            // Input event is dispatched by setNativeValue
             element.dispatchEvent(new KeyboardEvent('keyup', keyEventOpts));
+        }
+
+        // 4. Verification & Fallback
+        await new Promise(r => setTimeout(r, 100));
+        let finalVal = element.value || element.textContent;
+
+        if (finalVal.length < text.length * 0.8) { // If significantly missing
+            console.warn('Typing verification failed. Attempting brute-force injection...');
+            if (element.tagName === 'DIV' && element.isContentEditable) {
+                element.textContent = text;
+            } else {
+                setNativeValue(element, text);
+            }
+            element.dispatchEvent(new Event('input', { bubbles: true }));
         }
 
         element.dispatchEvent(new Event('change', { bubbles: true }));
@@ -112,16 +122,22 @@ if (window.GrokLoopInjected) {
     async function simulateClick(element) {
         if (!element) return;
 
-        // 1. Move to element (hover)
-        element.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, cancelable: true, view: window }));
-        element.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, cancelable: true, view: window }));
+        const eventOptions = { bubbles: true, cancelable: true, view: window };
+        const pointerOptions = { ...eventOptions, pointerId: 1, isPrimary: true, button: 0 };
+
+        // 1. PointerOver/Enter & MouseOver/Enter (Hover)
+        element.dispatchEvent(new PointerEvent('pointerover', pointerOptions));
+        element.dispatchEvent(new PointerEvent('pointerenter', pointerOptions));
+        element.dispatchEvent(new MouseEvent('mouseover', eventOptions));
+        element.dispatchEvent(new MouseEvent('mouseenter', eventOptions));
 
         // "Hover" time
         await new Promise(r => setTimeout(r, Math.random() * 300 + 100));
 
-        // 2. Down
-        element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
-        element.focus();
+        // 2. PointerDown & MouseDown
+        element.dispatchEvent(new PointerEvent('pointerdown', pointerOptions));
+        element.dispatchEvent(new MouseEvent('mousedown', eventOptions));
+        element.focus(); // Focus on mousedown
 
         // Hold time
         await new Promise(r => setTimeout(r, Math.random() * 150 + 50));
@@ -330,37 +346,177 @@ if (window.GrokLoopInjected) {
     async function upscaleVideo() {
         await new Promise(r => setTimeout(r, 2000)); // Wait for UI to settle
 
-        const findUpscaleBtn = () => {
-            const buttons = Array.from(document.querySelectorAll('button'));
-            return buttons.find(b => {
-                const text = (b.innerText || b.ariaLabel || '').toLowerCase();
-                return text.includes('upscale') && !b.disabled;
+        // Helper to find button/menuitem by text
+        const findBtn = (text) => {
+            const elements = Array.from(document.querySelectorAll('button, div[role="button"], div[role="menuitem"]'));
+            return elements.find(el => {
+                const content = (el.innerText || el.ariaLabel || el.textContent || '').toLowerCase();
+                return content.includes(text.toLowerCase()) && !el.disabled;
             });
         };
 
-        let upscaleBtn = findUpscaleBtn();
+        // 1. Try finding 'Upscale' directly
+        let upscaleBtn = findBtn('Upscale');
 
         if (!upscaleBtn) {
-            console.log('Upscale button not found initially. Waiting...');
-            // Poll for a bit
-            for (let i = 0; i < 10; i++) {
+            console.log('Upscale button not found directly. Checking "More" menu...');
+
+            // 2. Find "More" button (...)
+            // Strategy A: Aria Label (More, Options, etc.)
+            let moreBtn = Array.from(document.querySelectorAll('button')).find(b => {
+                const label = (b.ariaLabel || b.title || '').toLowerCase();
+                return (label.includes('more') || label.includes('option')) && !b.disabled;
+            });
+
+            // Strategy C: Inner Text "..." (Loosened)
+            if (!moreBtn) {
+                console.log('Strategy A failed. Trying Strategy C (Inner Text "...")...');
+                moreBtn = Array.from(document.querySelectorAll('button')).find(b => {
+                    const text = (b.innerText || '').trim();
+                    return text.includes('...') || text.includes('…');
+                });
+            }
+
+            // Strategy B: Proximity to "Edit" (Refined)
+            if (!moreBtn) {
+                console.log('Strategy A/C failed. Trying Strategy B (Proximity)...');
+                const editBtn = Array.from(document.querySelectorAll('button')).find(b =>
+                    (b.innerText || '').toLowerCase().includes('edit') // broader match
+                );
+
+                if (editBtn) {
+                    const container = editBtn.parentElement;
+                    if (container) {
+                        const siblings = Array.from(container.querySelectorAll('button'));
+                        // The "More" button is usually the last one
+                        const lastBtn = siblings[siblings.length - 1];
+                        if (lastBtn && lastBtn !== editBtn) {
+                            console.log('Found potential "More" button via proximity (last sibling).');
+                            moreBtn = lastBtn;
+                        }
+                    }
+                }
+            }
+
+            // Strategy D: Proximity to "Redo" or "Retry" (if Edit not found)
+            if (!moreBtn) {
+                console.log('Strategy A/B/C failed. Trying Strategy D (Redo/Retry Proximity)...');
+                const actionBtn = Array.from(document.querySelectorAll('button')).find(b => {
+                    const text = (b.innerText || '').toLowerCase();
+                    return text.includes('redo') || text.includes('retry') || text.includes('vary');
+                });
+
+                if (actionBtn) {
+                    const container = actionBtn.parentElement;
+                    if (container) {
+                        const siblings = Array.from(container.querySelectorAll('button'));
+                        const lastBtn = siblings[siblings.length - 1];
+                        if (lastBtn && lastBtn !== actionBtn) {
+                            console.log('Found potential "More" button via Redo/Retry proximity.');
+                            moreBtn = lastBtn;
+                        }
+                    }
+                }
+            }
+
+            if (moreBtn) {
+                console.log('Found "More" menu button. Clicking...', moreBtn);
+
+                // Attempt 1: Standard Click
+                await simulateClick(moreBtn);
                 await new Promise(r => setTimeout(r, 1000));
-                upscaleBtn = findUpscaleBtn();
-                if (upscaleBtn) break;
+
+                // Verify if menu opened (Radix uses aria-expanded or data-state)
+                let isOpen = moreBtn.getAttribute('aria-expanded') === 'true' || moreBtn.getAttribute('data-state') === 'open';
+
+                if (!isOpen) {
+                    console.log('Menu did not open. Retrying with native click() and Pointer events...');
+                    // Attempt 2: Native Click + Force
+                    moreBtn.click();
+                    const pointerOpts = { bubbles: true, cancelable: true, view: window, pointerId: 1, isPrimary: true, button: 0 };
+                    moreBtn.dispatchEvent(new PointerEvent('pointerdown', pointerOpts));
+                    moreBtn.dispatchEvent(new PointerEvent('pointerup', pointerOpts));
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+
+                await new Promise(r => setTimeout(r, 1000)); // Extra settle time
+
+                // 3. Search for Upscale again inside the new menu
+                upscaleBtn = findBtn('Upscale'); // This will use the "Upscale" or "Upscale video" logic we have
+            } else {
+                console.warn('Could not find "More" button via any strategy.');
+
+                // DIAGNOSTIC DUMP
+                console.log('%c --- DIAGNOSTIC DUMP ---', 'color: cyan; font-weight: bold;');
+                const likelyToolbar = document.querySelector('button')?.parentElement;
+                if (likelyToolbar) {
+                    console.log('Sample Toolbar HTML:', likelyToolbar.innerHTML);
+                }
+                const allButtons = Array.from(document.querySelectorAll('button'));
+                console.log('All Buttons:', allButtons.map(b => ({
+                    text: b.innerText,
+                    aria: b.ariaLabel,
+                    svg: b.querySelector('svg') ? 'Has SVG' : 'No SVG'
+                })));
             }
         }
 
         if (!upscaleBtn) {
-            throw new Error('Upscale button not found after waiting.');
+            console.warn('Upscale button not found anywhere.');
+            throw new Error('Upscale button not found.');
         }
 
         console.log('Found Upscale button. Clicking...');
         await simulateClick(upscaleBtn);
 
-        // Wait for the NEW video (High Res)
-        // We can reuse waitForVideoResponse, assuming the old one is replaced or a new one is added.
+        // Wait for the NEW video
         console.log('Waiting for upscaled video generation...');
         return waitForVideoResponse();
+    }
+
+    async function handleABTest() {
+        // Wait briefly for UI to potentially show A/B test (Skip button)
+        await new Promise(r => setTimeout(r, 2000));
+
+        const findSkipBtn = () => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            return buttons.find(b => {
+                const text = (b.innerText || b.ariaLabel || '').toLowerCase();
+                return text === 'skip' && !b.disabled;
+            });
+        };
+
+        const skipBtn = findSkipBtn();
+
+        if (skipBtn) {
+            console.log('A/B Test detected (Skip button found).');
+
+            if (state.config.autoSkip) {
+                console.log('Auto-Skip enabled. Clicking Skip...');
+                await simulateClick(skipBtn);
+                // Wait for skip to process and potentially new video to settle
+                await new Promise(r => setTimeout(r, 2000));
+                // Re-verify video presence
+                return waitForVideoResponse();
+            } else {
+                console.log('Auto-Skip disabled. Waiting for user selection...');
+                // Poll until Skip button is GONE (meaning user selected something)
+                return new Promise((resolve) => {
+                    const check = setInterval(async () => {
+                        if (!findSkipBtn()) {
+                            clearInterval(check);
+                            console.log('User selection detected (Skip button gone). Resuming...');
+                            await new Promise(r => setTimeout(r, 1000));
+                            // Use whatever video is now current
+                            const videoUrl = await waitForVideoResponse();
+                            resolve(videoUrl);
+                        }
+                    }, 1000);
+                });
+            }
+        }
+
+        return null; // No A/B test detected
     }
 
     async function extractLastFrame(videoUrl) {
@@ -575,7 +731,10 @@ if (window.GrokLoopInjected) {
             if (state.isRunning) return;
 
             state.config = {
-                timeout: (payload.timeout || 30) * 1000
+                timeout: (payload.timeout || 30) * 1000,
+                upscale: payload.upscale,
+                autoDownload: payload.autoDownload,
+                autoSkip: payload.autoSkip
             };
 
             state.segments = payload.prompts.map((p, i) => ({
@@ -740,6 +899,12 @@ if (window.GrokLoopInjected) {
 
                     // 3. Status
                     let videoUrl = await waitForVideoResponse();
+
+                    // --- A/B Test Handling ---
+                    const abVideoUrl = await handleABTest();
+                    if (abVideoUrl) {
+                        videoUrl = abVideoUrl;
+                    }
 
                     // --- Upscaling (Optional) ---
                     if (state.config.upscale) {

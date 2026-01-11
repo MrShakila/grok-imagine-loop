@@ -58,6 +58,10 @@ This tool allows you to create seamless video sequences by automatically using t
 *   Use the **Pause** button on the dashboard if you need to inspect a video.
 *   Use **Reset Inputs** at the bottom of the popup to clear all saved settings and images.
 
+## Known Issues
+
+*   **Subsequence Scene Initial Frame:** Manually setting a custom initial image for a *subsequent* scene (checking the box to use a new image for Scene 2+) is currently not fully supported and may default to the previous frame.
+
 ## Support
 
 If you find this tool useful, consider buying me a coffee!
