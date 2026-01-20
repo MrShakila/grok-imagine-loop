@@ -443,6 +443,23 @@ if (window.GrokLoopInjected) {
         inputArea.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, keyCode: 13, key: 'Enter' }));
     }
 
+    async function clearInputAttachments() {
+        // Look for "Remove" buttons (X) on thumbnails in the input area
+        const removeBtns = Array.from(document.querySelectorAll('button[aria-label="Remove"], button[title="Remove"]'));
+        const attachmentCloseBtns = removeBtns.filter(btn => {
+            // Ensure button is near the input area or in a thumbnail container
+            return btn.closest('.input-area') || btn.closest('div[role="group"]'); // Heuristic
+        });
+
+        if (attachmentCloseBtns.length > 0) {
+            console.log(`Found ${attachmentCloseBtns.length} attachments to clear. Removing...`);
+            for (let btn of attachmentCloseBtns) {
+                btn.click();
+                await new Promise(r => setTimeout(r, 200));
+            }
+        }
+    }
+
     async function waitForVideoResponse() {
         // Snapshot existing video URLs to ignore them
         const existingVideos = new Set(
@@ -1291,6 +1308,9 @@ if (window.GrokLoopInjected) {
 
                     seg.status = 'working';
                     this.dashboard.update();
+
+                    // 0. Clean Input State (Likely fixes "Leaked Image" bug)
+                    await clearInputAttachments();
 
                     // 1. Input Image
                     // 1. Input Image (Late Extraction for chaining)

@@ -1,5 +1,10 @@
 # Release Notes - Grok Imagine Loop
 
+## v1.6.0.5 (Beta 5)
+- **Fix:** Improved "Make Video" button detection to find floating footers while strictly ignoring sidebar navigation (Final fix for "Sidebar Misclick" vs "Button Not Found").
+- **Fix:** Clicking "Regenerate" next to a scene now correctly uses the *edited* prompt from the text box, instead of the original prompt.
+- **Fix:** Regenerating the First Scene (Scene 1) no longer accidentally re-uploads the last frame of a previous run as an input image.
+
 ## v1.6.0.4 (Beta 4)
 - **Fix:** "Start Generation" button is now sticky at the bottom with a robust layout (no longer overlaps content).
 - **Fix:** Resume from Pause now correctly handles finding the "Make video" prompt area.
