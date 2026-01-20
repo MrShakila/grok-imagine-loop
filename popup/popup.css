@@ -261,19 +261,28 @@ input[type="checkbox"] {
     background: var(--bg-hover);
 }
 
-/* Sticky Footer */
-.sticky-footer {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
+/* Main Tab Specifics (Flex Layout for Fixed Footer) */
+#tab-main {
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Scroll Container */
+.tab-scroll-pane {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    padding-bottom: 5px;
+    /* Slight buffer */
+}
+
+/* Fixed Footer (Flex Sibling) */
+.tab-footer {
+    flex-shrink: 0;
     background: var(--bg);
-    padding: 10px;
+    padding: 10px 15px;
+    /* Horizontal Matches tab padding */
     border-top: 1px solid var(--border);
-    margin: 0 -15px -15px -15px;
-    /* Counteract tab padding */
-    padding-left: 15px;
-    padding-right: 15px;
     z-index: 50;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.5);
 }
@@ -293,7 +302,6 @@ input[type="checkbox"] {
     cursor: pointer;
     transition: opacity 0.2s;
     margin-top: 0;
-    /* Handled by container padding */
 }
 
 /* Custom Tooltip */

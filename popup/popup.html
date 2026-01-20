@@ -17,93 +17,94 @@
 
   <!-- MAIN TAB -->
   <div id="tab-main" class="tab-content active">
-    <!-- Header/Logo -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
-        <img src="../icons/icon48.png" style="width: 24px; height: 24px; background: #000; border-radius: 6px;">
-        Grok Imagine Loop
-      </h3>
-      <span id="versionNumber" style="font-size: 10px; color: var(--text-dim);"></span>
-    </div>
-
-    <!-- Global Initial Image -->
-    <div class="input-group">
-      <label for="initialImage" id="initialImageLabel">Initial Image (Scene 1 Only)</label>
-
-      <!-- Default File Input -->
-      <input type="file" id="initialImage" accept="image/*">
-
-      <!-- Preview overlay (Hidden by default) -->
-      <div id="restoredImageIndicator" style="display: none; position: relative; width: fit-content; margin-top: 8px;">
-        <img id="restoredImagePreview"
-          style="max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 4px; border: 1px solid #333; background: #000; display: block;">
-
-        <button id="clearImageBtn" title="Remove Image"
-          style="position: absolute; top: -8px; right: -8px; background: #f55; color: white; border: 2px solid #222; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; line-height: 1; padding: 0;">&times;</button>
-
-        <span id="restoredImageText" style="display: none;"></span>
+    <!-- Scrollable Content Wrapper -->
+    <div class="tab-scroll-pane">
+      <!-- Header/Logo -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+          <img src="../icons/icon48.png" style="width: 24px; height: 24px; background: #000; border-radius: 6px;">
+          Grok Imagine Loop
+        </h3>
+        <span id="versionNumber" style="font-size: 10px; color: var(--text-dim);"></span>
       </div>
-    </div>
 
-    <!-- Debug Log Viewer (Moved here) -->
-    <div id="debugLogContainer"
-      style="display: none; margin-bottom: 12px; border-top: 1px solid #333; padding-top: 10px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-        <h4 style="margin: 0; font-size: 11px; color: #888;">Debug Logs</h4>
-        <button id="downloaddebugLogsButton" title="Download Logs & Config"
-          style="background: none; border: none; color: var(--primary); font-size: 10px; cursor: pointer; padding: 0;">Download</button>
+      <!-- Global Initial Image -->
+      <div class="input-group">
+        <label for="initialImage" id="initialImageLabel">Initial Image (Scene 1 Only)</label>
+
+        <!-- Default File Input -->
+        <input type="file" id="initialImage" accept="image/*">
+
+        <!-- Preview overlay (Hidden by default) -->
+        <div id="restoredImageIndicator"
+          style="display: none; position: relative; width: fit-content; margin-top: 8px;">
+          <img id="restoredImagePreview"
+            style="max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 4px; border: 1px solid #333; background: #000; display: block;">
+
+          <button id="clearImageBtn" title="Remove Image"
+            style="position: absolute; top: -8px; right: -8px; background: #f55; color: white; border: 2px solid #222; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; line-height: 1; padding: 0;">&times;</button>
+
+          <span id="restoredImageText" style="display: none;"></span>
+        </div>
       </div>
-      <div id="debugLogViewer" style="
-            background: #111; 
-            color: #0f0; 
-            font-family: monospace; 
-            font-size: 10px; 
-            padding: 5px; 
-            height: 100px; 
-            overflow-y: auto; 
-            border: 1px solid #333; 
-            border-radius: 4px; 
-            white-space: pre-wrap;
-            word-break: break-all;
-        "></div>
-    </div>
 
-    <!-- Global Prompt (Suffix) -->
-    <div class="input-group">
-      <label for="globalPrompt" title="Text appended to EVERY scene's prompt (e.g. style modifiers).">Global Suffix
-        (Style)</label>
-      <textarea id="globalPrompt" placeholder="e.g. cinematic lighting, 8k resolution, photorealistic"
-        style="height: 40px; resize: vertical;"></textarea>
-    </div>
+      <!-- Debug Log Viewer (Moved here) -->
+      <div id="debugLogContainer"
+        style="display: none; margin-bottom: 12px; border-top: 1px solid #333; padding-top: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+          <h4 style="margin: 0; font-size: 11px; color: #888;">Debug Logs</h4>
+          <button id="downloaddebugLogsButton" title="Download Logs & Config"
+            style="background: none; border: none; color: var(--primary); font-size: 10px; cursor: pointer; padding: 0;">Download</button>
+        </div>
+        <div id="debugLogViewer" style="
+              background: #111; 
+              color: #0f0; 
+              font-family: monospace; 
+              font-size: 10px; 
+              padding: 5px; 
+              height: 100px; 
+              overflow-y: auto; 
+              border: 1px solid #333; 
+              border-radius: 4px; 
+              white-space: pre-wrap;
+              word-break: break-all;
+          "></div>
+      </div>
 
-    <!-- Bulk Prompts Input (Synced) -->
-    <div class="input-group">
-      <label for="bulkPrompts">Scene Prompts (One scene per line)</label>
-      <textarea id="bulkPrompts" placeholder="Paste your script here...&#10;Line 1 = Scene 1&#10;Line 2 = Scene 2"
-        style="height: 100px;"></textarea>
-    </div>
+      <!-- Global Prompt (Suffix) -->
+      <div class="input-group">
+        <label for="globalPrompt" title="Text appended to EVERY scene's prompt (e.g. style modifiers).">Global Suffix
+          (Style)</label>
+        <textarea id="globalPrompt" placeholder="e.g. cinematic lighting, 8k resolution, photorealistic"
+          style="height: 40px; resize: vertical;"></textarea>
+      </div>
 
-    <!-- Scenes List (Visual & Images) -->
-    <label style="margin-bottom: 8px;">Scene Details</label>
-    <div id="scenes-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-      <!-- Scenes injected here -->
-    </div>
+      <!-- Bulk Prompts Input (Synced) -->
+      <div class="input-group">
+        <label for="bulkPrompts">Scene Prompts (One scene per line)</label>
+        <textarea id="bulkPrompts" placeholder="Paste your script here...&#10;Line 1 = Scene 1&#10;Line 2 = Scene 2"
+          style="height: 100px;"></textarea>
+      </div>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-      <button id="addSceneBtn"
-        style="flex: 1; padding: 8px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px; cursor: pointer;"
-        title="Add a new empty scene to the end of the list.">+
-        Add Scene</button>
-      <button id="clearScenesBtn"
-        style="width: auto; padding: 8px; background: #333; border: 1px solid #444; color: #f55; border-radius: 4px; cursor: pointer;"
-        title="Remove all scenes and clear the list.">Clear</button>
-    </div>
+      <!-- Scenes List (Visual & Images) -->
+      <label style="margin-bottom: 8px;">Scene Details</label>
+      <div id="scenes-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+        <!-- Scenes injected here -->
+      </div>
 
-    <!-- Spacer for sticky footer -->
-    <div style="height: 60px;"></div>
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <button id="addSceneBtn"
+          style="flex: 1; padding: 8px; background: #333; border: 1px solid #444; color: #fff; border-radius: 4px; cursor: pointer;"
+          title="Add a new empty scene to the end of the list.">+
+          Add Scene</button>
+        <button id="clearScenesBtn"
+          style="width: auto; padding: 8px; background: #333; border: 1px solid #444; color: #f55; border-radius: 4px; cursor: pointer;"
+          title="Remove all scenes and clear the list.">Clear</button>
+      </div>
+    </div> <!-- End .tab-scroll-pane -->
 
     <!-- Actions (Sticky Footer) -->
-    <div class="sticky-footer">
+    <div class="tab-footer">
       <button id="startBtn" title="Start or Pause the automation loop.">Start Generation</button>
       <div id="status" class="status"></div>
     </div>
