@@ -8,6 +8,8 @@ This tool allows you to create seamless video sequences by automatically using t
 
 *   **🔄 Auto-Looping (Scenes):** Automatically chains video generations. Define how many "Scenes" you want for your story.
 *   **🖼️ Smart Frame Extraction:** Extracts the last frame of a video to use as the start of the next one.
+- **Global Suffix:** Define a shared style prompt (e.g., "photorealistic") that is automatically appended to every scene.
+- **Pause After Video:** Optional "Step Mode" to pause the loop after each generation, allowing for manual review and adjustments.
 *   **⚡ Upscale Support:** Check "Upscale Result" to automatically request the High Quality version of each video.
 *   **📥 Auto-Download:** Automatically saves each generated segment to your Downloads folder.
 *   **💾 State Persistence:**
