@@ -1,5 +1,12 @@
 # Release Notes - Grok Imagine Loop
 
+## v1.6.0.4 (Beta 4)
+- **Fix:** "Start Generation" button is now sticky at the bottom with a robust layout (no longer overlaps content).
+- **Fix:** Resume from Pause now correctly handles finding the "Make video" prompt area.
+- **Fix:** Resume loop after uploading a new Start Frame now works correctly (Fixed Blob error).
+- **Fix:** Editing scenes (e.g. removing an image) no longer causes video previews to disappear.
+- **Fix:** "Upscale" button search is now scoped to prevent misclicking the sidebar "More" menu.
+
 ## v1.6.0
 - **Feature:** **Pause After Video:** Added Option to stop loop after each video generation (useful for manual review).
 - **Fix:** Fixed Debug Log Console visibility issue on startup.

@@ -247,9 +247,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Inject Version
-    const manifestVersion = chrome.runtime.getManifest().version;
+    // Display Version
+    const manifest = chrome.runtime.getManifest();
+    const manifestVersion = manifest.version;
+    const versionNumber = document.getElementById('versionNumber'); // Assuming this is the new ID for the main version display
+
     try {
+        if (versionNumber) { // Check existence (new ID)
+            versionNumber.textContent = "v1.6 Beta 4"; // Manual Override for Beta
+        }
+
         let displayVer = `v${manifestVersion}`;
         if (manifestVersion === '1.6.0.1') displayVer = 'v1.6 Beta 1';
         if (manifestVersion === '1.6.0.2') displayVer = 'v1.6 Beta 2';
