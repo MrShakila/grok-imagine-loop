@@ -445,15 +445,40 @@ if (window.GrokLoopInjected) {
 
     async function clearInputAttachments() {
         // Look for "Remove" buttons (X) on thumbnails in the input area
-        const removeBtns = Array.from(document.querySelectorAll('button[aria-label="Remove"], button[title="Remove"]'));
+        // Strategy 1: Aria Label / Title
+        const labels = ['Remove', 'Remove attachment', 'Close', 'Delete'];
+        let removeBtns = Array.from(document.querySelectorAll('button')).filter(b =>
+            labels.some(l => (b.ariaLabel === l || b.title === l))
+        );
+
+        // Strategy 2: SVG Path (X icon common path)
+        if (removeBtns.length === 0) {
+            // Find inputs/thumbnails logic...
+            const thumbnails = document.querySelectorAll('div[role="group"] img, .input-area img');
+            thumbnails.forEach(img => {
+                // The button is usually a sibling or parent's sibling
+                const container = img.closest('div[role="group"]') || img.parentElement;
+                if (container) {
+                    const btns = container.querySelectorAll('button');
+                    btns.forEach(b => removeBtns.push(b));
+                }
+            });
+        }
+
+        // Strategy 2 (Backup): Find any button inside the input area that isn't the file upload or send button
+        // This is risky, but effective if styled with an X
+
         const attachmentCloseBtns = removeBtns.filter(btn => {
             // Ensure button is near the input area or in a thumbnail container
-            return btn.closest('.input-area') || btn.closest('div[role="group"]'); // Heuristic
+            return btn.closest('.input-area') || btn.closest('div[role="group"]') || (btn.parentElement && btn.parentElement.innerText === ''); // Empty parents often hold icon-only buttons
         });
 
         if (attachmentCloseBtns.length > 0) {
             console.log(`Found ${attachmentCloseBtns.length} attachments to clear. Removing...`);
             for (let btn of attachmentCloseBtns) {
+                // Ensure it's not the main upload button (usually has 'Attach' or specific icon)
+                if (btn.ariaLabel === 'Attach media') continue;
+
                 btn.click();
                 await new Promise(r => setTimeout(r, 200));
             }
@@ -1341,21 +1366,23 @@ if (window.GrokLoopInjected) {
                     if (!imageToUpload) {
                         if (reuseImage && state.config.initialImage) { // Only use initial image if reuse is ON and it exists
                             imageToUpload = state.config.initialImage;
-                            console.log('Using global initial image (Reuse ON)...');
+                            console.log('[Debug-Image] Selected: Global initial image (Reuse ON)');
                         } else if (isFirst && state.config.initialImage) { // If first segment and initial image exists
                             imageToUpload = state.config.initialImage;
-                            console.log('Using global initial image (First Segment)...');
+                            console.log('[Debug-Image] Selected: Global initial image (First Segment)');
                         } else {
                             // Loop Mode fallback (if extraction failed or wasn't set)
                             // FIX: Only use fallback for subsequent scenes (index > 0). 
                             // Scene 1 should NOT inherit a stale lastGeneratedImage unless explicitly configured (reuseInitialImage handled above).
                             if (index > 0 && state.lastGeneratedImage) {
-                                console.log('Using last generated frame (Fallback)...');
+                                console.log('[Debug-Image] Selected: Last generated frame (Fallback, Index > 0)');
                                 imageToUpload = state.lastGeneratedImage;
+                            } else {
+                                console.log(`[Debug-Image] Selected: NULL. (Index: ${index}, LastGen: ${!!state.lastGeneratedImage}, ConfigInit: ${!!state.config.initialImage})`);
                             }
                         }
                     } else {
-                        console.log('Using pre-defined input image (Custom or Extracted)...');
+                        console.log('[Debug-Image] Selected: Pre-defined input image (Custom or Extracted)');
                     }
 
                     if (imageToUpload) {
