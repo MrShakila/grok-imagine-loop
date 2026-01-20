@@ -1164,9 +1164,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     regenBtn.style.display = 'flex';
                     regenBtn.onclick = (e) => {
                         e.stopPropagation();
+                        // Prompt Sync: Use the current value from the scenes array
+                        let promptToSend = null;
+                        if (scenes && scenes[i] && scenes[i].prompt) {
+                            promptToSend = scenes[i].prompt;
+                        }
+
                         chrome.tabs.sendMessage(tab.id, {
                             action: 'REGENERATE_SEGMENT',
-                            payload: { index: i }
+                            payload: {
+                                index: i,
+                                prompt: promptToSend
+                            }
                         });
                     };
                 } else {
