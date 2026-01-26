@@ -1,5 +1,20 @@
 # Release Notes - Grok Imagine Loop
 
+## v1.6.0.14 (Beta 14)
+- **Feature:** **Multi-Language A/B Test Support:** Automatically detects and skips the "Which video do you prefer?" survey in all supported languages (Chinese, German, Japanese, English, Spanish, etc.).
+- **Fix:** **Enhanced Upscaling Support:**
+    - Fixed German "Upscale" detection by prioritizing the `...` icon over text to prevent misclicks.
+    - Added support for Traditional Chinese ("升級影片") and simplified Chinese variations.
+    - Improved Spanish detection ("Mejorar vídeo") to avoid confusion with "Enhance Prompt".
+    - Restored robust English fallback detection.
+- **Fix:** **Resume Button Reliability:** Fixed a bug where the dashboard buttons would get stuck in a "Resuming..." state if the loop crashed (e.g. max retries). They now correctly reset to "Resume Loop".
+
+
+## v1.6.0.13 (Beta 13)
+- **Fix:** Fixed a critical issue where "Resume Loop" would accidentally click the "Clear/Delete" (X) button on the main toolbar, causing the generation to vanish. The extension now strictly targets only "X" buttons attached to *uploaded* thumbnails.
+- **Debug:** Added clearer logging for Language Detection and Attachment Cleaning to help troubleshoot multi-language environments.
+
+
 ## v1.6.0.12 (Beta 12)
 - **Fix:** "Pause on Error" now correctly pauses the loop if "Proactive Frame Extraction" fails after all retries. Previously, it would log the error but continue to the next segment without an image.
 
