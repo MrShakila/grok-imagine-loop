@@ -253,18 +253,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const versionNumber = document.getElementById('versionNumber'); // Assuming this is the new ID for the main version display
 
     try {
-        if (versionNumber) { // Check existence (new ID)
-            versionNumber.textContent = "v1.6 Beta 12"; // Manual Override for Beta
-        }
+        const displayVer = `v${manifestVersion}`;
 
-        let displayVer = `v${manifestVersion}`;
-        if (manifestVersion === '1.6.0.1') displayVer = 'v1.6 Beta 1';
-        if (manifestVersion === '1.6.0.2') displayVer = 'v1.6 Beta 2';
-        if (manifestVersion === '1.6.0.3') displayVer = 'v1.6 Beta 3';
+        if (versionNumber) {
+            versionNumber.textContent = displayVer;
+        }
 
         if (versionSpan) versionSpan.innerText = displayVer;
         const aboutVer = document.getElementById('aboutVersion');
-        if (aboutVer) aboutVer.innerText = `Version ${manifestVersion} (Beta 3)`;
+        if (aboutVer) aboutVer.innerText = `Version ${manifestVersion}`;
     } catch (e) { console.error(e); }
 
     const bulkPromptsInput = document.getElementById('bulkPrompts');
