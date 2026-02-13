@@ -843,6 +843,46 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Helper ---
+    // --- Batch Generation Logic ---
+    const batchCountInput = document.getElementById('batchCount');
+    const batchStartBtn = document.getElementById('batchStartBtn');
+
+    if (batchStartBtn) {
+        batchStartBtn.onclick = async () => {
+            const count = parseInt(batchCountInput.value);
+            if (isNaN(count) || count < 1) {
+                showCustomConfirm('Please enter a valid count (1-100).' , null, { title: 'Invalid Count', showCancel: false, confirmText: 'OK' });
+                return;
+            }
+
+            const promptLines = bulkPromptsInput.value.split('\n');
+            const firstPrompt = (promptLines[0] || '').trim();
+
+            if (!firstPrompt) {
+                showCustomConfirm('Please enter a prompt in the first scene first.', null, { title: 'Prompt Required', showCancel: false, confirmText: 'OK' });
+                return;
+            }
+
+            showCustomConfirm(`Generate ${count} independent clips for this prompt?\n\nThis will overwrite your current scenes and enable Auto-Download.`, async () => {
+                autoDownloadInput.checked = true;
+                reuseInitialImageInput.checked = true;
+                saveConfigs();
+
+                scenes = [];
+                for (let i = 0; i < count; i++) {
+                    scenes.push({ prompt: firstPrompt, image: null });
+                }
+                saveScenes();
+                renderScenes();
+                updateBulkFromScenes();
+
+                setTimeout(() => {
+                    startBtn.click();
+                }, 500);
+            }, { title: 'Confirm Batch Run', confirmText: 'Start Batch' });
+        };
+    }
+
     function readFileAsDataURL(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
