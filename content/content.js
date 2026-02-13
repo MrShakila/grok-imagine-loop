@@ -1169,6 +1169,9 @@ if (window.GrokLoopInjected) {
         async start(payload) {
             console.log('LoopManager starting...', payload);
             if (state.isRunning) return;
+            // Reset transient state to ensure no stale chaining
+            state.lastGeneratedImage = null;
+
 
             state.config = {
                 ...state.config, // Preserve existing (like storage loaded debug flags)

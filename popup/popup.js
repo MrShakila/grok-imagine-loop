@@ -843,77 +843,46 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Helper ---
-    function readFileAsDataURL(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
+    // --- Batch Generation Logic ---
+    const batchPromptInput = document.getElementById('batchPrompt');
+    const batchCountInput = document.getElementById('batchCount');
+    const batchStartBtn = document.getElementById('batchStartBtn');
 
-    // --- Logic ---
-    async function findGrokTab() {
-        console.log('Finding Grok Tab (Robust Mode)...');
+    if (batchStartBtn) {
+        batchStartBtn.onclick = async () => {
+            const count = parseInt(batchCountInput.value);
+            const batchPrompt = batchPromptInput.value.trim();
 
-        try {
-            // 1. Query ALL tabs and filter manually for maximum reliability
-            // This avoids issues with strict pattern matching differences between browsers
-            // Requires "tabs" permission in manifest
-            const allTabs = await chrome.tabs.query({});
-
-            // Robust Filter: Includes www, no-www, http, https, trailing slashes, etc.
-            const strictTabs = allTabs.filter(t => t.url && (
-                t.url.includes('grok.com/imagine')
-            ));
-
-            if (strictTabs.length > 1) {
-                console.warn('Multiple Imagine tabs found:', strictTabs.length);
-                showCustomConfirm(
-                    `Multiple "grok.com/imagine" tabs detected (${strictTabs.length}).\n\nPlease close all but one to prevent conflicts.`,
-                    null,
-                    { title: "Multiple Tabs", showCancel: false, confirmText: "OK" }
-                );
-                return null;
+            if (isNaN(count) || count < 1) {
+                showCustomConfirm('Please enter a valid count (1-100).' , null, { title: 'Invalid Count', showCancel: false, confirmText: 'OK' });
+                return;
             }
 
-            if (strictTabs.length === 1) {
-                console.log('Found exactly one Imagine tab:', strictTabs[0].id);
-                return strictTabs[0];
+            if (!batchPrompt) {
+                showCustomConfirm('Please enter a prompt in the Batch Prompt box.', null, { title: 'Prompt Required', showCancel: false, confirmText: 'OK' });
+                return;
             }
 
-            // 2. If NO strict match, check for generic Grok/X tabs to give a better error
-            const genericTabs = allTabs.filter(t => t.url && (
-                t.url.includes('grok.com') ||
-                t.url.includes('x.com') ||
-                t.url.includes('twitter.com')
-            ));
+            showCustomConfirm(`Generate ${count} independent clips for this prompt?
 
-            if (genericTabs.length > 0) {
-                // User has Grok open but not on /imagine
-                console.warn('Found generic Grok tabs but not /imagine');
-                showCustomConfirm(
-                    "Found open Grok tab, but not on the Imagine page.\n\nPlease navigate to:\ngrok.com/imagine",
-                    null,
-                    { title: "Wrong Page", showCancel: false, confirmText: "OK" }
-                );
-                return null;
-            }
+This will overwrite your current scenes and enable Auto-Download.`, async () => {
+                autoDownloadInput.checked = true;
+                reuseInitialImageInput.checked = true;
+                saveConfigs();
 
-            // 3. No tabs found at all
-            console.warn('No Grok tabs found.');
-            showCustomConfirm(
-                "No Grok tab found.\n\nPlease open:\ngrok.com/imagine",
-                null,
-                { title: "Tab Not Found", showCancel: false, confirmText: "Open" }
-            );
-            return null;
+                scenes = [];
+                for (let i = 0; i < count; i++) {
+                    scenes.push({ prompt: batchPrompt, image: null });
+                }
+                saveScenes();
+                renderScenes();
+                updateBulkFromScenes();
 
-        } catch (e) {
-            console.error('Tab Search Error', e);
-            statusDiv.innerText = 'Error searching tabs: ' + e.message;
-            return null;
-        }
+                setTimeout(() => {
+                    startBtn.click();
+                }, 500);
+            }, { title: 'Confirm Batch Run', confirmText: 'Start Batch' });
+        };
     }
 
     async function sendMessageWithRetry(tabId, message, attempt = 1) {
