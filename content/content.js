@@ -455,11 +455,13 @@ if (window.GrokLoopInjected) {
             // Revert to global search to catch floating footers, but EXCLUDE Nav/Sidebar
             const buttons = Array.from(document.querySelectorAll('button'));
 
-            // Priority 1: "Make Video" buttons (Safest)
+            // Priority 1: "Make Video" or "Redo" buttons (Safest for Video)
             sendBtn = buttons.find(b => {
                 if (b.closest('nav') || b.closest('aside') || b.closest('[role="navigation"]')) return false;
                 const label = (b.textContent || b.ariaLabel || b.title || '').trim().toLowerCase();
-                return TRANSLATIONS.makeVideo.some(k => label === k || label.includes(k));
+                const isMakeVideo = TRANSLATIONS.makeVideo.some(k => label === k || label.includes(k));
+                const isRedo = TRANSLATIONS.regenerate.some(k => label === k || label.includes(k));
+                return isMakeVideo || isRedo;
             });
 
             // Priority 2: Generic "Send" buttons
@@ -569,8 +571,8 @@ if (window.GrokLoopInjected) {
 
                 for (let v of videos) {
                     if (v.src && !existingVideos.has(v.src)) {
-                        if (v.src.startsWith('blob:') || v.src.includes('video.twimg.com') || v.src.includes('grok.com')) {
-                            console.log('New video detected:', v.src);
+                        if (v.src.startsWith('blob:') || v.src.includes('twimg.com') || v.src.includes('grok.com') || v.src.includes('x.ai') || v.src.includes('grokusercontent.com') || v.src.includes('xai.com')) {
+                            console.log('[Video Detect] New video found! URL:', v.src);
                             cleanup();
                             await new Promise(r => setTimeout(r, 2000));
                             resolve(v.src);

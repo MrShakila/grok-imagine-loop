@@ -1,6 +1,8 @@
 # Release Notes - Grok Imagine Loop
 
 ## v1.6.7
+- **Fix: Redo Button Detection**: Added support for the "Redo" button which appears after the first video is generated. This ensures batch runs continue correctly beyond the first clip.
+
 - **Fix: Timeout Accuracy**: Fixed a bug where the timeout value was sometimes treated as milliseconds instead of seconds, causing premature timeouts after only a few seconds. Added robust parsing and unit-of-measure detection for time-related settings.
 
 - **Fix: Prevent x.com Redirection**: Removed social-posting terms from the send button detection to prevent accidental sharing/redirection to x.com. Prioritized "Make Video" buttons for more accurate interaction. Reverted extension discovery to strictly grok.com per user request.
