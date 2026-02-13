@@ -1,6 +1,10 @@
 # Release Notes - Grok Imagine Loop
 
-## v1.6.4
+## v1.6.6
+- **Fix: Prevent x.com Redirection**: Removed social-posting terms from the send button detection to prevent accidental sharing/redirection to x.com. Prioritized "Make Video" buttons for more accurate interaction. Reverted extension discovery to strictly grok.com per user request.
+
+- **Improvement: Enhanced Tab Discovery**: Now supports both grok.com and x.com/i/grok as valid sessions. Fixed the "Open" button in the tab-not-found dialog to actually open the Grok Imagine page.
+
 - **Feature: Quick Batch Generation**: Added a dedicated section to generate multiple independent clips (10, 20, 40+) from a single prompt with a dedicated input box. Automatically enables Auto-Download and ensures clips are generated from scratch (no chaining).
 
 ## v1.6.1 (Stable)

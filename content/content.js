@@ -15,7 +15,7 @@ if (window.GrokLoopInjected) {
     // --- Selectors ---
     // --- Multi-Language Support ---
     const TRANSLATIONS = {
-        send: ['send', 'post', 'submit', 'enviar', 'publicar', 'envoyer', 'publier', 'absenden', 'senden', 'veröffentlichen', '发送', '发布', '送信', '投稿', 'отправить', 'enviar'],
+        send: ['send', 'submit', 'enviar', 'envoyer', 'absenden', 'senden', '发送', '送信', 'отправить'],
         makeVideo: ['make video', 'generate', 'create video', 'crear video', 'generar', 'créer une vidéo', 'générer', 'video erstellen', 'generieren', '生成视频', '制作视频', '動画を作成', 'создать видео', 'criar vídeo'],
         upload: ['add photos', 'add image', 'upload', 'añadir', 'subir', 'ajouter', 'importer', 'hochladen', 'hinzufügen', '添加', '上传', '追加', 'загрузить', 'adicionar'],
         regenerate: ['redo', 'regenerate', 'try again', 'retry', 'vary', 'regenerar', 'intentar de nuevo', 'variar', 'régénérer', 'réessayer', 'neu erzeugen', 'erneut versuchen', '重新生成', '再試行', 'регенерировать', 'regenerar'],
@@ -453,18 +453,22 @@ if (window.GrokLoopInjected) {
         for (let i = 0; i < 20; i++) {
             // Revert to global search to catch floating footers, but EXCLUDE Nav/Sidebar
             const buttons = Array.from(document.querySelectorAll('button'));
+
+            // Priority 1: "Make Video" buttons (Safest)
             sendBtn = buttons.find(b => {
-                // EXCLUSION: Ignore buttons in Sidebar/Nav
                 if (b.closest('nav') || b.closest('aside') || b.closest('[role="navigation"]')) return false;
-
                 const label = (b.textContent || b.ariaLabel || b.title || '').trim().toLowerCase();
-
-                // Multi-Language Match
-                const isSend = TRANSLATIONS.send.some(k => label === k || label.includes(k));
-                const isMakeVideo = TRANSLATIONS.makeVideo.some(k => label === k || label.includes(k));
-
-                return isSend || isMakeVideo;
+                return TRANSLATIONS.makeVideo.some(k => label === k || label.includes(k));
             });
+
+            // Priority 2: Generic "Send" buttons
+            if (!sendBtn) {
+                sendBtn = buttons.find(b => {
+                    if (b.closest('nav') || b.closest('aside') || b.closest('[role="navigation"]')) return false;
+                    const label = (b.textContent || b.ariaLabel || b.title || '').trim().toLowerCase();
+                    return TRANSLATIONS.send.some(k => label === k || label.includes(k));
+                });
+            }
 
             if (sendBtn) {
                 if (!sendBtn.disabled && !sendBtn.classList.contains('disabled')) {

@@ -1390,7 +1390,7 @@ This will overwrite your current scenes and enable Auto-Download.`, async () => 
             console.warn('No Grok tabs found.');
             showCustomConfirm(
                 "No Grok tab found.\n\nPlease open:\ngrok.com/imagine",
-                null,
+                () => { chrome.tabs.create({ url: 'https://grok.com/imagine' }); },
                 { title: "Tab Not Found", showCancel: false, confirmText: "Open" }
             );
             return null;
