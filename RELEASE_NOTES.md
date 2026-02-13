@@ -2,6 +2,8 @@
 
 ## v1.6.7
 - **Fix: Redo Button Detection**: Added support for the "Redo" button which appears after the first video is generated. This ensures batch runs continue correctly beyond the first clip.
+- **Improvement: Restored X.com Support**: Re-enabled discovery for `x.com/i/grok` and `twitter.com/i/grok` while keeping the redirection-blocking logic active. This allows users on the X-integrated version of Grok to use the extension without being kicked out to the main X feed.
+
 
 - **Fix: Timeout Accuracy**: Fixed a bug where the timeout value was sometimes treated as milliseconds instead of seconds, causing premature timeouts after only a few seconds. Added robust parsing and unit-of-measure detection for time-related settings.
 

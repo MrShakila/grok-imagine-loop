@@ -1350,7 +1350,9 @@ This will overwrite your current scenes and enable Auto-Download.`, async () => 
 
             // Robust Filter: Includes www, no-www, http, https, trailing slashes, etc.
             const strictTabs = allTabs.filter(t => t.url && (
-                t.url.includes('grok.com/imagine')
+                t.url.includes('grok.com/imagine') ||
+                t.url.includes('x.com/i/grok') ||
+                t.url.includes('twitter.com/i/grok')
             ));
 
             if (strictTabs.length > 1) {
@@ -1389,7 +1391,7 @@ This will overwrite your current scenes and enable Auto-Download.`, async () => 
             // 3. No tabs found at all
             console.warn('No Grok tabs found.');
             showCustomConfirm(
-                "No Grok tab found.\n\nPlease open:\ngrok.com/imagine",
+                "No Grok tab found.\n\nPlease open:\ngrok.com/imagine or x.com/i/grok",
                 () => { chrome.tabs.create({ url: 'https://grok.com/imagine' }); },
                 { title: "Tab Not Found", showCancel: false, confirmText: "Open" }
             );
