@@ -173,9 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
         debugLogViewer.scrollTop = debugLogViewer.scrollHeight;
     }
 
-
-
-
     // Toggle Log Container visibility on change
     if (showDebugLogsInput) {
         showDebugLogsInput.addEventListener('change', () => {
@@ -644,7 +641,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load presets on startup
     loadSavedConfigs();
 
-
     // --- Persistence ---
 
     function saveScenes() {
@@ -701,7 +697,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('restoredImageIndicator').style.display = 'none';
         globalFileInput.value = '';
     });
-
 
     // Attach Config Listeners
     // const pauseOnErrorInput = document.getElementById('pauseOnError'); // Moved to top
@@ -1333,4 +1328,78 @@ This will overwrite your current scenes and enable Auto-Download.`, async () => 
             location.reload();
         }, { title: "Stop Run", confirmText: "Stop" });
     };
+
+    function readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // --- Logic ---
+    async function findGrokTab() {
+        console.log('Finding Grok Tab (Robust Mode)...');
+
+        try {
+            // 1. Query ALL tabs and filter manually for maximum reliability
+            // This avoids issues with strict pattern matching differences between browsers
+            // Requires "tabs" permission in manifest
+            const allTabs = await chrome.tabs.query({});
+
+            // Robust Filter: Includes www, no-www, http, https, trailing slashes, etc.
+            const strictTabs = allTabs.filter(t => t.url && (
+                t.url.includes('grok.com/imagine')
+            ));
+
+            if (strictTabs.length > 1) {
+                console.warn('Multiple Imagine tabs found:', strictTabs.length);
+                showCustomConfirm(
+                    `Multiple "grok.com/imagine" tabs detected (${strictTabs.length}).\n\nPlease close all but one to prevent conflicts.`,
+                    null,
+                    { title: "Multiple Tabs", showCancel: false, confirmText: "OK" }
+                );
+                return null;
+            }
+
+            if (strictTabs.length === 1) {
+                console.log('Found exactly one Imagine tab:', strictTabs[0].id);
+                return strictTabs[0];
+            }
+
+            // 2. If NO strict match, check for generic Grok/X tabs to give a better error
+            const genericTabs = allTabs.filter(t => t.url && (
+                t.url.includes('grok.com') ||
+                t.url.includes('x.com') ||
+                t.url.includes('twitter.com')
+            ));
+
+            if (genericTabs.length > 0) {
+                // User has Grok open but not on /imagine
+                console.warn('Found generic Grok tabs but not /imagine');
+                showCustomConfirm(
+                    "Found open Grok tab, but not on the Imagine page.\n\nPlease navigate to:\ngrok.com/imagine",
+                    null,
+                    { title: "Wrong Page", showCancel: false, confirmText: "OK" }
+                );
+                return null;
+            }
+
+            // 3. No tabs found at all
+            console.warn('No Grok tabs found.');
+            showCustomConfirm(
+                "No Grok tab found.\n\nPlease open:\ngrok.com/imagine",
+                null,
+                { title: "Tab Not Found", showCancel: false, confirmText: "Open" }
+            );
+            return null;
+
+        } catch (e) {
+            console.error('Tab Search Error', e);
+            statusDiv.innerText = 'Error searching tabs: ' + e.message;
+            return null;
+        }
+    }
+
 });

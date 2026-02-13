@@ -1,6 +1,6 @@
 # Release Notes - Grok Imagine Loop
 
-## v1.6.3
+## v1.6.4
 - **Feature: Quick Batch Generation**: Added a dedicated section to generate multiple independent clips (10, 20, 40+) from a single prompt with a dedicated input box. Automatically enables Auto-Download and ensures clips are generated from scratch (no chaining).
 
 ## v1.6.1 (Stable)
