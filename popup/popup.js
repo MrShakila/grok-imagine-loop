@@ -649,10 +649,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function saveConfigs() {
         const config = {
-            timeout: timeoutInput.value,
-            maxDelay: maxDelayInput.value,
-            retryLimit: retryLimitInput.value,
-            moderationRetryLimit: moderationRetryLimitInput.value,
+            timeout: parseInt(timeoutInput.value) || 120,
+            maxDelay: parseInt(maxDelayInput.value) || 15,
+            retryLimit: parseInt(retryLimitInput.value) || 3,
+            moderationRetryLimit: parseInt(moderationRetryLimitInput.value) || 2,
             upscale: upscaleInput.checked,
             autoDownload: autoDownloadInput.checked,
             autoSkip: autoSkipInput.checked,

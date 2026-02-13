@@ -361,7 +361,8 @@ if (window.GrokLoopInjected) {
         await new Promise(r => setTimeout(r, 1000)); // Reduced initial pause
 
         let inputArea = null;
-        const timeoutMs = state.config.timeout;
+        let timeoutMs = parseInt(state.config.timeout) || 120000;
+        if (timeoutMs < 1000) timeoutMs *= 1000;
         const retryDelay = 2000;
         const maxRetries = Math.ceil(timeoutMs / retryDelay);
 
@@ -551,7 +552,8 @@ if (window.GrokLoopInjected) {
         console.log('Waiting for new video... Existing:', existingVideos);
 
         return new Promise((resolve, reject) => {
-            const timeoutMs = state.config && state.config.timeout ? state.config.timeout : 120000;
+            let timeoutMs = (state.config && state.config.timeout) ? parseInt(state.config.timeout) : 120000;
+            if (timeoutMs < 1000) timeoutMs *= 1000; // Convert seconds to ms if needed
             let resolved = false;
 
             const cleanup = () => {

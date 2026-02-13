@@ -1,6 +1,8 @@
 # Release Notes - Grok Imagine Loop
 
-## v1.6.6
+## v1.6.7
+- **Fix: Timeout Accuracy**: Fixed a bug where the timeout value was sometimes treated as milliseconds instead of seconds, causing premature timeouts after only a few seconds. Added robust parsing and unit-of-measure detection for time-related settings.
+
 - **Fix: Prevent x.com Redirection**: Removed social-posting terms from the send button detection to prevent accidental sharing/redirection to x.com. Prioritized "Make Video" buttons for more accurate interaction. Reverted extension discovery to strictly grok.com per user request.
 
 - **Improvement: Enhanced Tab Discovery**: Now supports both grok.com and x.com/i/grok as valid sessions. Fixed the "Open" button in the tab-not-found dialog to actually open the Grok Imagine page.
