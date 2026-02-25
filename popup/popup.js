@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('startBtn');
+    let lastKnownState = null;
 
     // --- Custom Tooltip Logic ---
     const tooltip = document.createElement('div');
@@ -906,7 +907,12 @@ This will overwrite your current scenes and enable Auto-Download.`, async () => 
                 updateBulkFromScenes();
 
                 // Switch tab to Run
-                document.querySelector('.tab-btn[data-tab="tab-run"]').click();
+
+                // Switch tab to Run
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('tab-run').classList.add('active');
+                document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+
 
                 setTimeout(() => {
                     startBtn.click();
@@ -967,7 +973,6 @@ This will overwrite your current scenes and enable Auto-Download.`, async () => 
     }
 
     // Track global state
-    let lastKnownState = null;
 
     // Start / Pause / Resume Logic
     startBtn.onclick = async () => {
