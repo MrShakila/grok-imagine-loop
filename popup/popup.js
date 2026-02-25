@@ -880,6 +880,40 @@ This will overwrite your current scenes and enable Auto-Download.`, async () => 
         };
     }
 
+    // --- Story Mode Logic ---
+    const storyContentInput = document.getElementById('storyContent');
+    const storyStartBtn = document.getElementById('storyStartBtn');
+
+    if (storyStartBtn) {
+        storyStartBtn.onclick = async () => {
+            const story = storyContentInput.value.trim();
+            if (!story) {
+                showCustomConfirm('Please paste your story content first.', null, { title: 'Story Required', showCancel: false, confirmText: 'OK' });
+                return;
+            }
+
+            const paragraphs = story.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+            if (paragraphs.length === 0) return;
+
+            showCustomConfirm(`Create a story loop with ${paragraphs.length} segments?\n\nThis will overwrite your current scenes, enable Auto-Download, and ensure Chaining (Smart Loops) is active.`, async () => {
+                autoDownloadInput.checked = true;
+                reuseInitialImageInput.checked = false; // Important for chaining
+                saveConfigs();
+
+                scenes = paragraphs.map(p => ({ prompt: p, image: null }));
+                saveScenes();
+                renderScenes();
+                updateBulkFromScenes();
+
+                // Switch tab to Run
+                document.querySelector('.tab-btn[data-tab="tab-run"]').click();
+
+                setTimeout(() => {
+                    startBtn.click();
+                }, 500);
+            }, { title: 'Confirm Story Generation', confirmText: 'Start Story' });
+        };
+    }
     async function sendMessageWithRetry(tabId, message, attempt = 1) {
         console.log(`[Popup] Attempt ${attempt}: Sending message to tab ${tabId}`);
         statusDiv.innerText = `Attempt ${attempt}: Connecting to tab ${tabId}...`;
