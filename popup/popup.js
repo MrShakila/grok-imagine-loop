@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('startBtn');
+    let lastKnownState = null;
 
     // --- Custom Tooltip Logic ---
     const tooltip = document.createElement('div');
@@ -880,6 +881,45 @@ This will overwrite your current scenes and enable Auto-Download.`, async () => 
         };
     }
 
+    // --- Story Mode Logic ---
+    const storyContentInput = document.getElementById('storyContent');
+    const storyStartBtn = document.getElementById('storyStartBtn');
+
+    if (storyStartBtn) {
+        storyStartBtn.onclick = async () => {
+            const story = storyContentInput.value.trim();
+            if (!story) {
+                showCustomConfirm('Please paste your story content first.', null, { title: 'Story Required', showCancel: false, confirmText: 'OK' });
+                return;
+            }
+
+            const paragraphs = story.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+            if (paragraphs.length === 0) return;
+
+            showCustomConfirm(`Create a story loop with ${paragraphs.length} segments?\n\nThis will overwrite your current scenes, enable Auto-Download, and ensure Chaining (Smart Loops) is active.`, async () => {
+                autoDownloadInput.checked = true;
+                reuseInitialImageInput.checked = false; // Important for chaining
+                saveConfigs();
+
+                scenes = paragraphs.map(p => ({ prompt: p, image: null }));
+                saveScenes();
+                renderScenes();
+                updateBulkFromScenes();
+
+                // Switch tab to Run
+
+                // Switch tab to Run
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('tab-run').classList.add('active');
+                document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+
+
+                setTimeout(() => {
+                    startBtn.click();
+                }, 500);
+            }, { title: 'Confirm Story Generation', confirmText: 'Start Story' });
+        };
+    }
     async function sendMessageWithRetry(tabId, message, attempt = 1) {
         console.log(`[Popup] Attempt ${attempt}: Sending message to tab ${tabId}`);
         statusDiv.innerText = `Attempt ${attempt}: Connecting to tab ${tabId}...`;
@@ -933,7 +973,6 @@ This will overwrite your current scenes and enable Auto-Download.`, async () => 
     }
 
     // Track global state
-    let lastKnownState = null;
 
     // Start / Pause / Resume Logic
     startBtn.onclick = async () => {
